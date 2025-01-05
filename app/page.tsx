@@ -1,101 +1,193 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Header from "@/components/common/Header";
+import Footer from "@/components/common/Footer";
+
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Card, CardContent } from "@/components/ui/card";
+import { listHomeBooks } from '@/api/home';
+import defaultPic from '@/public/default.gif'
+
+interface Book {
+  bookId: number;
+  bookName: string;
+  picUrl: string;
+  bookDesc: string;
+  authorName: string;
+  type: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const router = useRouter();
+  const [sliderContent, setSliderContent] = useState<Book[]>([]);
+  const [topBooks, setTopBooks] = useState<Book[]>([]);
+  const [weekRecommend, setWeekRecommend] = useState<Book[]>([]);
+  const [hotRecommend, setHotRecommend] = useState<Book[]>([]);
+  const [goodRecommend, setGoodRecommend] = useState<Book[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+
+  useEffect(() => {
+    const fetchHomeBooks = async () => {
+      try {
+        const { data } = await listHomeBooks();
+        console.log(data)
+        console.log(data.filter((book: Book) => book.type === '0'))
+        
+        // 分类处理数据
+        setSliderContent(data.filter((book: Book) => book.type === '0'));
+        setTopBooks(data.filter((book: Book) => book.type === '1'));
+        setWeekRecommend(data.filter((book: Book) => book.type === '2'));   
+        setHotRecommend(data.filter((book: Book) => book.type === '3'));
+        setGoodRecommend(data.filter((book: Book) => book.type === '4'));
+        console.log(sliderContent)
+      } catch (error) {
+        console.error('Failed to fetch home books:', error);
+      }
+    };
+
+    fetchHomeBooks();
+  }, []);
+
+  const navigateToBook = (bookId: number) => {
+    router.push(`/book/${bookId}`);
+  };
+
+  return (
+    <div className="min-h-screen">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-8">
+        {/* 轮播图区域 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <Carousel className="w-full">
+              <CarouselContent>
+                {sliderContent.map((book, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative h-[400px] cursor-pointer" 
+                         onClick={() => navigateToBook(book.bookId)}>
+                      <Image
+                        src={defaultPic}
+                        alt={book.bookName}
+                        fill
+                        className="object-cover rounded-lg"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+
+            {/* 热门推荐区域 */}
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              {topBooks.slice(0, 5).map((book, index) => (
+                <Card key={index} 
+                      className="cursor-pointer hover:shadow-lg transition-shadow"
+                      onClick={() => navigateToBook(book.bookId)}>
+                  <CardContent className="p-4">
+                    <h3 className="font-bold">{book.bookName}</h3>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* 本周强推 */}
+          <div className="bg-white rounded-lg p-4 shadow">
+            <h2 className="text-xl font-bold mb-4">本周强推</h2>
+            <div className="space-y-4">
+              {weekRecommend.map((book, index) => (
+                <div key={index} 
+                     className="flex gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                     onClick={() => navigateToBook(book.bookId)}>
+                  <div className="relative w-24 h-32">
+                    <Image
+                      src={defaultPic}
+                      alt={book.bookName}
+                      fill
+                      className="object-cover rounded"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">{book.bookName}</h3>
+                    <p className="text-sm text-gray-600 line-clamp-3"
+                       dangerouslySetInnerHTML={{ __html: book.bookDesc }}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* 热门推荐区域 */}
+        <section className="mt-12">
+          <h2 className="text-2xl font-bold mb-6">热门推荐</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {hotRecommend.map((book, index) => (
+              <Card key={index} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => navigateToBook(book.bookId)}>
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <div className="relative w-24 h-32">
+                      <Image
+                        src={defaultPic}
+                        alt={book.bookName}
+                        fill
+                        className="object-cover rounded"
+                        
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-bold">{book.bookName}</h3>
+                      <p className="text-sm text-gray-600">作者：{book.authorName}</p>
+                      <p className="text-sm text-gray-600 line-clamp-3"
+                         dangerouslySetInnerHTML={{ __html: book.bookDesc }}/>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* 精品推荐区域 */}
+        <section className="mt-12">
+          <h2 className="text-2xl font-bold mb-6">精品推荐</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {goodRecommend.map((book, index) => (
+              <Card key={index} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => navigateToBook(book.bookId)}>
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <div className="relative w-24 h-32">
+                      <Image
+                        src={defaultPic}
+                        alt={book.bookName}
+                        fill
+                        className="object-cover rounded"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-bold">{book.bookName}</h3>
+                      <p className="text-sm text-gray-600">作者：{book.authorName}</p>
+                      <p className="text-sm text-gray-600 line-clamp-3"
+                         dangerouslySetInnerHTML={{ __html: book.bookDesc }}/>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <Footer />
     </div>
   );
 }
