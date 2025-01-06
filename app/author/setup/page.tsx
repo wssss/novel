@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { toast } from "@/hooks/use-toast"
 import { ImageUpload } from "@/components/image-upload"
+import { useAuth } from "@clerk/nextjs"
+
+
 
 interface UserInfo {
   userPhoto: string
@@ -14,24 +17,6 @@ export default function UserSetup() {
     userPhoto: "",
     nickName: "",
   })
-
-  // 获取用户信息
-  const fetchUserInfo = async () => {
-    try {
-      const response = await fetch("/api/user/info")
-      if (!response.ok) throw new Error("获取用户信息失败")
-      const data = await response.json()
-      setUserInfo({
-        userPhoto: data.userPhoto || "",
-        nickName: data.nickName || "",
-      })
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        description: "获取用户信息失败"
-      })
-    }
-  }
 
   // 更新用户头像
   const updateUserPhoto = async (photoUrl: string) => {
@@ -62,12 +47,11 @@ export default function UserSetup() {
     }
   }
 
-  useEffect(() => {
-    fetchUserInfo()
-  }, [])
+
+
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="max-w-3xl p-6">
       <div className="bg-white rounded-lg shadow-sm">
         <div className="p-6">
           <h2 className="text-xl font-medium mb-6">个人设置</h2>

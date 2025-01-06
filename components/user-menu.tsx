@@ -12,7 +12,7 @@ const menuItems = [
   },
   {
     name: "账号设置",
-    href: "/user/setup", 
+    href: "/author/setup", 
     className: "link_6"
   }
 ]

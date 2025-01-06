@@ -1,21 +1,30 @@
-import useSWR from "swr"    
-import { BooksResponse } from "@/types/book"
+import { useState, useEffect } from "react"
+import { fetchAuthorBooks } from "@/app/author/actions"
 
+export function useAuthorBooks(page: number, pageSize: number) {
+  const [books, setBooks] = useState<any[]>([])
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-export function useBooks(page: number) {
-    const { data, error, isLoading } = useSWR<BooksResponse>(
-      `/api/author/books?pageNum=${page - 1}&pageSize=10`,
-      async (url) => {
-        const res = await fetch(url)
-        if (!res.ok) throw new Error("Failed to fetch books")
-        return res.json()
+  useEffect(() => {
+    const loadBooks = async () => {
+      try {
+        setIsLoading(true)
+        const data = await fetchAuthorBooks(page, pageSize)
+        console.log('data', data)
+        setBooks(data.books)
+        setTotal(data.total)
+        setError(null)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "获取数据失败")
+      } finally {
+        setIsLoading(false)
       }
-    )
-  
-    return {
-      books: data?.list,
-      total: data?.total || 0,
-      isLoading,
-      isError: error
     }
-  }
+
+    loadBooks()
+  }, [page, pageSize])
+
+  return { books, total, isLoading, error }
+}

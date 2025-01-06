@@ -30,12 +30,14 @@ interface Chapter {
   
   interface Book {
     id: string;
-    bookName: string;
-    authorName: string;
-    categoryName: string;
+    title: string;
+    author: string;
+    category: string;
     bookStatus: number;
     visitCount: number;
     wordCount: number;
+    type: string;
+    lastChapterName: string;
   }
   
   interface Chapter {

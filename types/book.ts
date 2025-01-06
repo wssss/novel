@@ -13,6 +13,8 @@ export interface Book {
 export interface Category {
   id: number;
   name: string;
+  workDirection: number;
+  sort: number;
 }
 
 export interface SearchCondition {

@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { dateFormat } from "@/lib/utils"
-
+import { useAuthorBooks } from "@/hooks/use-books"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -15,16 +15,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Pagination } from "@/components/ui/pagination"
-import { useBooks } from "@/hooks/use-books"
 import { wordCountFormat } from "@/lib/utils"
+import { Pagination } from "@/components/ui/pagination"
 
 export default function AuthorBooksPage() {
   const router = useRouter()
   const [page, setPage] = useState(1)
-  const { books, total, isLoading } = useBooks(page)
-
   const pageSize = 10
+  const { books, total, isLoading, error } = useAuthorBooks(page, pageSize)
+  
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <p className="text-muted-foreground">加载中...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
@@ -97,13 +111,13 @@ export default function AuthorBooksPage() {
             </Table>
           </div>
 
-          <div className="flex justify-center">
-            {/* <Pagination
+          {/* <div className="flex justify-center">
+            <Pagination
               currentPage={page}
               totalPages={Math.ceil(total / pageSize)}
               onPageChange={setPage}
-            /> */}
-          </div>
+            />
+          </div> */}
         </div>
       )}
     </div>

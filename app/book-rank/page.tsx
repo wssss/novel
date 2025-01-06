@@ -1,6 +1,3 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -12,42 +9,22 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import Header from "@/components/common/Header"
+import { getRankBooks } from "@/lib/data"
 
-interface Book {
-  id: number
-  bookName: string
-  categoryName: string
-  lastChapterName: string
-  authorName: string
-  wordCount: number
-}
+export default async function BookRank({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const rankType = String(searchParams.type || 'visit_rank');
+  const books = await getRankBooks(rankType);
+  
+  const rankName = {
+    'visit_rank': '点击榜',
+    'newest_rank': '新书榜',
+    'update_rank': '更新榜'
+  }[rankType];
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-export default function BookRank() {
-  const [books, setBooks] = useState<Book[]>([])
-  const [rankType, setRankType] = useState("visit_rank")
-  const [rankName, setRankName] = useState("点击榜")
-
-  // 获取排行榜数据
-  const fetchRankData = async (type: string) => {
-    try {
-      const res = await fetch(`${baseURL}/front/book/${type}`)
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
-      }
-      const { data } = await res.json()
-      if (!Array.isArray(data)) {
-        throw new Error('返回数据格式错误')
-      }
-      setBooks(data)
-    } catch (error) {
-      console.error("获取排行榜数据失败:", error)
-      setBooks([]) // 发生错误时清空数据
-    }
-  }
-
-  // 格式化字数
   const formatWordCount = (count: number) => {
     if (count > 10000) {
       return Math.floor(count / 10000) + "万"
@@ -57,27 +34,6 @@ export default function BookRank() {
     }
     return count
   }
-
-  // 切换排行榜类型
-  const handleRankChange = (value: string) => {
-    setRankType(value)
-    switch (value) {
-      case "visit_rank":
-        setRankName("点击榜")
-        break
-      case "newest_rank":
-        setRankName("新书榜")
-        break
-      case "update_rank":
-        setRankName("更新榜")
-        break
-    }
-    fetchRankData(value)
-  }
-
-  useEffect(() => {
-    fetchRankData("visit_rank")
-  }, [])
 
   return (
     <>
@@ -102,17 +58,17 @@ export default function BookRank() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {books.map((book, index) => (
+                    {books.map((book: Book, index: number) => (
                       <TableRow key={book.id}>
                         <TableCell>
                           <span className={`rank-${index + 1}`}>{index + 1}</span>
                         </TableCell>
-                        <TableCell>{book.categoryName}</TableCell>
+                        <TableCell>{book.category}</TableCell>
                         <TableCell>
-                          <a href={`/book/${book.id}`}>{book.bookName}</a>
+                          <a href={`/book/${book.id}`}>{book.title}</a>
                         </TableCell>
                         <TableCell>{book.lastChapterName}</TableCell>
-                        <TableCell>{book.authorName}</TableCell>
+                        <TableCell>{book.author}</TableCell>
                         <TableCell>{formatWordCount(book.wordCount)}</TableCell>
                       </TableRow>
                     ))}
@@ -128,15 +84,21 @@ export default function BookRank() {
                 <CardTitle>排行榜</CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs value={rankType} onValueChange={handleRankChange}>
+                <Tabs defaultValue={rankType}>
                   <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="visit_rank">点击榜</TabsTrigger>
-                    <TabsTrigger value="newest_rank">新书榜</TabsTrigger>
-                    <TabsTrigger value="update_rank">更新榜</TabsTrigger>
+                    <TabsTrigger value="visit_rank" asChild>
+                      <a href="?type=visit_rank">点击榜</a>
+                    </TabsTrigger>
+                    <TabsTrigger value="newest_rank" asChild>
+                      <a href="?type=newest_rank">新书榜</a>
+                    </TabsTrigger>
+                    <TabsTrigger value="update_rank" asChild>
+                      <a href="?type=update_rank">更新榜</a>
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
               </CardContent>
-            </Card>
+            </Card> 
           </div>
         </div>
       </div>

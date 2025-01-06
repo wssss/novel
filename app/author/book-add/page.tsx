@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select" 
 import { ImageUpload } from "@/components/image-upload"
+import { useAuth } from "@clerk/nextjs"
 
 interface Category {
   id: number
@@ -25,6 +26,8 @@ export default function BookAdd() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const user = useAuth()
+
   
   const [book, setBook] = useState({
     workDirection: "0", // 0-男频 1-女频
@@ -38,7 +41,7 @@ export default function BookAdd() {
   // 加载分类列表
   const loadCategories = async (workDirection: string) => {
     try {
-      const response = await fetch(`/api/books/categories?workDirection=${workDirection}`)
+      const response = await fetch(`/api/books?workDirection=${workDirection}`)
       const data = await response.json()
       setCategories(data)
       if (data.length > 0) {
@@ -56,6 +59,8 @@ export default function BookAdd() {
       })
     }
   }
+
+
 
   // 处理表单提交
   const onSubmit = async (e: React.FormEvent) => {

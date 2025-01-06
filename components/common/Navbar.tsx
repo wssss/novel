@@ -3,7 +3,6 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { getToken } from '@/lib/auth';
-import { getAuthorStatus } from '@/api/author';
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {

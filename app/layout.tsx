@@ -1,10 +1,6 @@
-"use client";
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { Toaster } from "@/components/ui/toaster";
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
@@ -24,13 +20,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  const pathname = usePathname();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
 
   return (
     <ClerkProvider>
