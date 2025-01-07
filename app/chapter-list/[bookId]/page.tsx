@@ -1,47 +1,18 @@
-'use client';
-
-import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { getBookDetail } from '@/lib/data';
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
-
+import { getChapterList } from '@/lib/data';
 
 interface PageProps {
-  params: Promise<{ bookId: string }>;
+  params: { bookId: string };
 }
 
-
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-export default function ChapterList({ params }: PageProps) {
-  const { bookId } = use(params);
-  const router = useRouter();
+export default async function ChapterList({ params }: PageProps) {
+  const { bookId } = await params;
   
-  const [book, setBook] = useState<Book | null>(null);
-  const [chapterList, setChapterList] = useState<Chapter[]>([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // 获取书籍信息
-        const bookData = await fetch(`${baseURL}/front/book/${bookId}`);
-        setBook((await bookData.json()).data);
-
-        // 获取章节列表
-        const chaptersData = await fetch(
-          `${baseURL}/front/book/chapter/list?bookId=${bookId}`
-        );
-        setChapterList((await chaptersData.json()).data);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
-
-    fetchData();
-  }, [bookId]);
-
-  const handleChapterClick = (bookId: string, chapterId: string) => {
-    router.push(`/book/${bookId}/${chapterId}`);
-  };
+  // 直接从后端获取数据
+  const book = await getBookDetail(bookId);
+  const chapterList = await getChapterList(bookId);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -93,15 +64,15 @@ export default function ChapterList({ params }: PageProps) {
                 key={chapter.id}
                 className="hover:bg-gray-50 rounded-md transition-colors"
               >
-                <button
-                  className="w-full text-left px-4 py-2"
-                  onClick={() => handleChapterClick(bookId, chapter.id)}
+                <a
+                  href={`/book/${bookId}/${chapter.id}`}
+                  className="block w-full text-left px-4 py-2"
                 >
                   <span className="text-gray-700">{chapter.chapterName}</span>
                   <span className={`ml-2 text-sm ${chapter.isVip === 1 ? 'text-red-500' : 'text-green-500'}`}>
                     [{chapter.isVip === 1 ? '收费' : '免费'}]
                   </span>
-                </button>
+                </a>
               </div>
             ))}
           </div>

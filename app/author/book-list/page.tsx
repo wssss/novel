@@ -1,11 +1,6 @@
-"use client"
-
-import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { dateFormat } from "@/lib/utils"
-import { useAuthorBooks } from "@/hooks/use-books"
+import { dateFormat, wordCountFormat } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -15,30 +10,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { wordCountFormat } from "@/lib/utils"
+import { getAuthorBooks } from "@/lib/data"
+import { auth } from "@clerk/nextjs/server"
 import { Pagination } from "@/components/ui/pagination"
 
-export default function AuthorBooksPage() {
-  const router = useRouter()
-  const [page, setPage] = useState(1)
-  const pageSize = 10
-  const { books, total, isLoading, error } = useAuthorBooks(page, pageSize)
-  
-  if (isLoading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">加载中...</p>
-      </div>
-    )
+export default async function AuthorBooksPage({
+  searchParams,
+}: {
+  searchParams: { page?: string }
+}) {
+  const { userId } = await auth()
+  if (!userId) {
+    throw new Error("未授权访问")
   }
 
-  if (error) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    )
-  }
+  const page = await Number(searchParams.page) || 1
+  const pageSize = 10
+  
+  const { books, total } = await getAuthorBooks(userId, page, pageSize)
 
   return (
     <div className="w-full">
@@ -77,12 +66,7 @@ export default function AuthorBooksPage() {
                     <TableCell className="text-center">
                       <div className="flex flex-col items-center gap-2">
                         <div className="relative h-[70px] w-[50px]">
-                          <Image
-                            fill
-                            src={`${process.env.NEXT_PUBLIC_IMG_URL}${book.picUrl}`}
-                            alt={book.bookName}
-                            className="object-cover"
-                          />
+                         
                         </div>
                         <span>{book.bookName}</span>
                       </div>
@@ -100,7 +84,7 @@ export default function AuthorBooksPage() {
                       <Button
                         variant="default"
                         size="sm"
-                        onClick={() => router.push(`/author/books/${book.id}/chapters`)}
+                        
                       >
                         章节管理
                       </Button>
@@ -115,7 +99,6 @@ export default function AuthorBooksPage() {
             <Pagination
               currentPage={page}
               totalPages={Math.ceil(total / pageSize)}
-              onPageChange={setPage}
             />
           </div> */}
         </div>
