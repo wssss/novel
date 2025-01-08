@@ -85,8 +85,8 @@ export default async function AuthorBooksPage({
                         variant="default"
                         size="sm"
                         
-                      >
-                        章节管理
+                        >
+                          <Link href={`/author/chapter-list?id=${book.id}`}>章节管理</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

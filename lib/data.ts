@@ -522,3 +522,42 @@ export async function getChapterContent(chapterId: string) {
     throw new Error('获取章节内容失败');
   }
 }
+
+// 添加获取章节列表的函数
+export async function getChapterListById(bookId: string, page: number = 1, pageSize: number = 10) {
+  try {
+    const offset = (page - 1) * pageSize
+
+    // 获取总数
+    const countResult = await connectionPool.query(
+      'SELECT COUNT(*) FROM book_chapter WHERE book_id = $1',
+      [bookId]
+    )
+    
+    const total = parseInt(countResult.rows[0].count)
+
+    // 获取章节列表
+    const result = await connectionPool.query(
+      `SELECT 
+        id,
+        chapter_name as "chapterName",
+        update_time as "chapterUpdateTime",
+        is_vip as "isVip"
+      FROM book_chapter 
+      WHERE book_id = $1
+      ORDER BY chapter_num ASC
+      LIMIT $2 OFFSET $3`,
+      [bookId, pageSize, offset]
+    )
+
+    return {
+      list: result.rows,
+      total,
+      pageNum: page,
+      pageSize
+    }
+  } catch (error) {
+    console.error('获取章节列表失败:', error)
+    throw new Error('获取章节列表失败')
+  }
+}
