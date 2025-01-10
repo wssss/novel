@@ -25,18 +25,30 @@ export async function POST(request: Request) {
     const books = await getBookList({
       pageSize: searchParams.pageSize || 10,
       pageNum: searchParams.pageNum || 1,
-      workDirection: searchParams.workDirection,
+      workDirection: searchParams.workDirection || 0,
       categoryId: searchParams.categoryId,
       bookStatus: searchParams.bookStatus,
       wordCountMin: searchParams.wordCountMin,
-      wordCountMax: searchParams.wordCountMax
+      wordCountMax: searchParams.wordCountMax,
+      keyword: searchParams.keyword
     });
 
-    return NextResponse.json(books);
+    return NextResponse.json({
+      list: books.list,
+      total: books.total,
+      pageNum: searchParams.pageNum || 1,
+      pageSize: searchParams.pageSize || 10
+    });
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
-      { error: '获取书籍列表失败' },
+      { 
+        list: [],
+        total: 0,
+        pageNum: 1,
+        pageSize: 10,
+        error: '获取书籍列表失败' 
+      },
       { status: 500 }
     );
   }

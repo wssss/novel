@@ -27,7 +27,7 @@ export default function Top() {
   }, []);
 
   const handleSearch = () => {
-    router.push(`/bookclass?key=${keyword}`);
+    router.push(`/book-class?key=${keyword}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

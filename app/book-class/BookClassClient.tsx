@@ -36,6 +36,7 @@ export default function BookClassClient({ initialCategories, initialBooks }: Boo
   const [searchCondition, setSearchCondition] = useState<SearchCondition>({
     pageSize: initialBooks.pageSize,
     pageNum: initialBooks.pageNum,
+    keyword: searchParams.get('key') || '',
   });
 
   // 状态控制
@@ -47,7 +48,11 @@ export default function BookClassClient({ initialCategories, initialBooks }: Boo
   useEffect(() => {
     const key = searchParams.get('key');
     if (key) {
-      setSearchCondition(prev => ({ ...prev, keyword: key }));
+      setSearchCondition(prev => ({
+        ...prev,
+        keyword: key,
+        pageNum: 1,
+      }));
     }
   }, [searchParams]);
 
@@ -134,6 +139,35 @@ export default function BookClassClient({ initialCategories, initialBooks }: Boo
       return `${Math.floor(count / 1000)}千`;
     }
     return count.toString();
+  };
+
+  const handleSearch = async () => {
+    if (searchCondition.keyword?.trim()) {
+      router.push(`/book-class?key=${searchCondition.keyword}`, { scroll: false });
+      
+      try {
+        const response = await fetch('/api/books', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...searchCondition,
+            pageNum: 1,
+          }),
+        });
+        const result = await response.json();
+        setBooks(result.list);
+        setTotal(result.total);
+        setSearchCondition(prev => ({
+          ...prev,
+          pageNum: 1,
+          pageSize: result.pageSize,
+        }));
+      } catch (error) {
+        console.error('Failed to search books:', error);
+      }
+    }
   };
 
   return (

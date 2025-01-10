@@ -64,7 +64,7 @@ export default async function ChapterList({
                   initialChapters={chapters}
                   initialTotal={total}
                   bookId={bookId}
-                />
+                />      
               </div>
             )}
           </div>

@@ -21,7 +21,7 @@ interface ChapterTableProps {
 export default function ChapterTable({ 
   initialChapters, 
   initialTotal, 
-  bookId 
+  bookId
 }: ChapterTableProps) {
   const [chapters, setChapters] = useState(initialChapters)
   const [total, setTotal] = useState(initialTotal)

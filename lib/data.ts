@@ -61,89 +61,78 @@ export async function getBookCategories(workDirection: number) {
   }
 }
 
-// 获取书籍列表
-export async function getBookList(searchCondition: any) {
+interface BookListParams {
+  pageSize: number;
+  pageNum: number;
+  workDirection: number;
+  keyword?: string;
+}
+
+export async function getBookList(params: BookListParams) {
+  const { pageSize, pageNum, workDirection, keyword } = params;
+  const offset = (pageNum - 1) * pageSize;
+  
   try {
-    let query = `
+    let queryText = `
       SELECT 
         b.id,
-        b.category_name as "categoryName",
         b.book_name as "bookName",
+        b.pic_url as "picUrl",
+        b.book_desc as "bookDesc",
         b.author_name as "authorName",
         b.word_count as "wordCount",
-        b.last_chapter_name as "lastChapterName"
+        b.book_status as "bookStatus",
+        b.visit_count as "visitCount",
+        b.category_name as "categoryName",
+        COUNT(*) OVER() as total
       FROM book_info b
-      WHERE 1=1
+      WHERE b.work_direction = $1
     `;
     
-    const values: any[] = [];
-    let valueIndex = 1;
+    const queryParams: any[] = [workDirection];
+    let paramCount = 2;
 
-    if (searchCondition.workDirection !== undefined) {
-      query += ` AND b.work_direction = $${valueIndex}`;
-      values.push(searchCondition.workDirection);
-      valueIndex++;
+    // 如果有关键词，添加搜索条件
+    if (keyword) {
+      queryText += ` AND (b.book_name ILIKE $${paramCount} OR b.author_name ILIKE $${paramCount})`;
+      queryParams.push(`%${keyword}%`);
+      paramCount++;
     }
 
-    if (searchCondition.categoryId) {
-      query += ` AND b.category_id = $${valueIndex}`;
-      values.push(searchCondition.categoryId);
-      valueIndex++;
-    }
+    queryText += `
+      ORDER BY b.visit_count DESC
+      LIMIT $${paramCount} OFFSET $${paramCount + 1}
+    `;
+    
+    queryParams.push(pageSize, offset);
 
-    if (searchCondition.bookStatus !== null && searchCondition.bookStatus !== undefined) {
-      query += ` AND b.book_status = $${valueIndex}`;
-      values.push(searchCondition.bookStatus);
-      valueIndex++;
-    }
-
-    if (searchCondition.wordCountMin !== null && searchCondition.wordCountMin !== undefined) {
-      query += ` AND b.word_count >= $${valueIndex}`;
-      values.push(searchCondition.wordCountMin);
-      valueIndex++;
-    }
-
-    if (searchCondition.wordCountMax !== null && searchCondition.wordCountMax !== undefined) {
-      query += ` AND b.word_count <= $${valueIndex}`;
-      values.push(searchCondition.wordCountMax);
-      valueIndex++;
-    }
-
-    // 添加分页
-    const offset = ((searchCondition.pageNum || 1) - 1) * (searchCondition.pageSize || 10);
-    query += ` ORDER BY b.create_time DESC LIMIT $${valueIndex} OFFSET $${valueIndex + 1}`;
-    values.push(searchCondition.pageSize || 10, offset);
-
-    // 获取总数
-    const countResult = await connectionPool.query({
-      text: query.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM').split('ORDER BY')[0],
-      values: values.slice(0, -2)
-    });
-
-    const total = parseInt(countResult.rows[0].count);
-
-    // 获取数据列表
     const result = await connectionPool.query({
-      text: query,
-      values
+      text: queryText,
+      values: queryParams
     });
+
+    const total = result.rows[0]?.total ? parseInt(result.rows[0].total) : 0;
 
     return {
-      list: result.rows.map((row: Book) => ({
-        id: String(row.id),
-        categoryName: String(row.categoryName),
-        title: String(row.bookName),
-        author: String(row.authorName),
+      list: result.rows.map(row => ({
+        id: row.id,
+        bookName: row.bookName,
+        picUrl: row.picUrl,
+        bookDesc: row.bookDesc,
+        authorName: row.authorName,
         wordCount: Number(row.wordCount),
-        lastChapterName: String(row.lastChapterName)
+        bookStatus: row.bookStatus,
+        visitCount: Number(row.visitCount),
+        categoryName: row.categoryName
       })),
       total,
-      pageNum: searchCondition.pageNum || 1,
-      pageSize: searchCondition.pageSize || 10
+      pageNum,
+      pageSize
     };
+    
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch book list');
+    throw new Error('获取书籍列表失败');
   }
 }
 
